@@ -6,6 +6,12 @@ major_version = 15
 
 [auth]
 enabled = true
+# Firm-internal tool: staff accounts are provisioned by an admin (no self-registration).
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = false
 
 [storage]
 enabled = true

@@ -79,12 +79,20 @@ create or replace function clear_posting(
 ) returns void
 language plpgsql security definer set search_path = public as $$
 begin
+  -- Idempotent: only clear a posting that is still uncleared. Re-running is a no-op
+  -- (no re-clear, no duplicate statement-line link, no duplicate audit row).
   update postings
      set cleared = true, cleared_date = p_cleared_date,
          cleared_by = p_cleared_by, statement_line_id = p_line_id
-   where id = p_posting_id and entity_id = p_entity_id;
+   where id = p_posting_id and entity_id = p_entity_id and cleared = false;
 
-  update statement_lines
-     set match_status = 'matched', matched_posting_id = p_posting_id
-   where id = p_line_id and entity_id = p_entity_id;
+  if found then
+    update statement_lines
+       set match_status = 'matched', matched_posting_id = p_posting_id
+     where id = p_line_id and entity_id = p_entity_id;
+
+    insert into audit_log (entity_id, actor, action, table_name, row_id, after)
+    values (p_entity_id, p_cleared_by, 'clear_posting', 'postings', p_posting_id::text,
+            jsonb_build_object('statement_line_id', p_line_id, 'cleared_date', p_cleared_date));
+  end if;
 end $$;
