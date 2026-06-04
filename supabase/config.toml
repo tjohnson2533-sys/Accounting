@@ -1,0 +1,16 @@
+project_id = "ledgerpro"
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+enabled = true
+
+[storage]
+enabled = true
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
